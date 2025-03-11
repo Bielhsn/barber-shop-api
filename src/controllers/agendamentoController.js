@@ -1,4 +1,10 @@
 import { buscarHorariosDisponiveis, salvarAgendamento } from '../services/agendamentoService.js';
+import { listarTodosAgendamentos } from '../services/agendamentoService.js'
+
+export const obterTodosAgendamentos = (req, res) => {
+    const agendamentos = listarTodosAgendamentos()
+    res.json(agendamentos)
+}
 
 export const listarHorariosDisponiveis = (req, res) => {
     const { data } = req.query;

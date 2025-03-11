@@ -1,14 +1,19 @@
-import express from 'express';
-import cors from 'cors';
-import agendamentoRoutes from './routes/agendamentoRoutes.js';
+import express from 'express'
+import cors from 'cors'
+import { conectarBanco } from './config/db.js'
+import agendamentoRoutes from './routes/agendamentoRoutes.js'
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+const app = express()
 
-app.use('/agendamentos', agendamentoRoutes);
+app.use(cors())
+app.use(express.json())
 
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-    console.log(`API rodando na porta ${PORT}`);
-});
+app.use('/agendamentos', agendamentoRoutes)
+
+const PORT = 8080
+
+conectarBanco().then(() => {
+    app.listen(PORT, () => {
+        console.log(`API rodando na porta ${PORT}`)
+    })
+})
