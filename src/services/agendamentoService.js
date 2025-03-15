@@ -8,7 +8,7 @@ const agendamentoSchema = new mongoose.Schema({
     data: String,
     hora: String,
     servico: String,
-    barbeiro: { type: String, enum: ['Barbeiro 1', 'Barbeiro 2'], required: true }, // 🔹 Opções fixas
+    barbeiro: { type: String, enum: ['Leandro', 'Vitor'], required: true }, // 🔹 Opções fixas
     status: { type: String, default: 'pendente' } // 🔹 Inicia como "pendente" até o pagamento ser aprovado
 });
 
