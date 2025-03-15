@@ -1,16 +1,25 @@
 import express from 'express'
 import cors from 'cors'
+import dotenv from "dotenv";
 import { conectarBanco } from './config/db.js'
 import agendamentoRoutes from './routes/agendamentoRoutes.js'
+import pixRoutes from "./routes/pixRoutes.js";
+
+dotenv.config();
 
 const app = express()
-
-app.use(cors())
+app.use(cors({
+    origin: ["https://lmbarbearia.com.br", "https://lm.com.br"],
+    methods: "GET,POST,PUT,DELETE",
+    credentials: true
+}))
 app.use(express.json())
 
+//Rotas
 app.use('/agendamentos', agendamentoRoutes)
+app.use('/api', pixRoutes)
 
-const PORT = 8080
+const PORT = process.env.PORT || 8080;
 
 conectarBanco().then(() => {
     app.listen(PORT, () => {
