@@ -8,47 +8,54 @@ const agendamentoSchema = new mongoose.Schema({
     data: String,
     hora: String,
     servico: String,
-    status: {type: String, default: 'pendente'}
-})
+    barbeiro: { type: String, enum: ['Barbeiro 1', 'Barbeiro 2'], required: true }, // 🔹 Opções fixas
+    status: { type: String, default: 'pendente' } // 🔹 Inicia como "pendente" até o pagamento ser aprovado
+});
 
-// Função para listar todos os agendamentos do banco
+// **Função para listar todos os agendamentos confirmados**
 export const listarTodosAgendamentos = async () => {
     try {
-        return await Agendamento.find({ status: "confirmado" }); // 🔹 Somente pagos
+        return await Agendamento.find({ status: "confirmado" }); // 🔹 Apenas agendamentos pagos
     } catch (error) {
         console.error("Erro ao buscar agendamentos:", error);
         return [];
     }
 };
 
-export const buscarHorariosDisponiveis = async (data) => {
-    const horariosBase = ['9:00','10:00','11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00']
+// **Função para buscar horários disponíveis para um barbeiro específico**
+export const buscarHorariosDisponiveis = async (data, barbeiro) => {
+    const horariosBase = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
 
     try {
-        const agendamentosNoBanco = await Agendamento.find({ data })
+        // Obtém os agendamentos apenas do barbeiro selecionado
+        const agendamentosNoBanco = await Agendamento.find({ data, barbeiro });
+
         return horariosBase.map(hora => ({
             hora,
-            disponivel: !agendamentosNoBanco.some(a => a.hora === hora)
-        }))
+            disponivel: !agendamentosNoBanco.some(a => a.hora === hora) // Bloqueia só se já houver um agendamento com esse barbeiro
+        }));
     } catch (error) {
-        console.error("Erro ao buscar horários:", error)
-        throw error
+        console.error("Erro ao buscar horários:", error);
+        throw error;
     }
-}
+};
 
-
+// **Função para salvar um novo agendamento no banco**
 export const salvarAgendamento = async (agendamento) => {
     try {
-        const { data, hora } = agendamento;
+        const { data, hora, barbeiro } = agendamento;
 
-        // Verifica se já existe um agendamento nesse horário
-        const ocupado = await Agendamento.findOne({ data, hora });
-        if (ocupado) return false;
+        // Verifica se o barbeiro já tem um agendamento nesse horário
+        const ocupado = await Agendamento.findOne({ data, hora, barbeiro });
 
-        // Define o status como "pendente"
+        if (ocupado) {
+            return false; // ⛔ Horário já ocupado por esse barbeiro
+        }
+
+        // Define o status como "pendente" até a confirmação do pagamento
         const novoAgendamento = new Agendamento({
             ...agendamento,
-            status: "pendente" // 🔹 O pagamento ainda não foi realizado
+            status: "pendente" 
         });
 
         await novoAgendamento.save();
@@ -59,22 +66,20 @@ export const salvarAgendamento = async (agendamento) => {
     }
 };
 
-router.post('/confirmar-pagamento', async (req, res) => {
-    const { agendamentoId } = req.body;
-
+// **Função para confirmar pagamento de um agendamento**
+export const confirmarPagamento = async (agendamentoId) => {
     try {
         const agendamento = await Agendamento.findById(agendamentoId);
         if (!agendamento) {
-            return res.status(404).json({ erro: "Agendamento não encontrado." });
+            throw new Error("Agendamento não encontrado.");
         }
 
         agendamento.status = "confirmado"; // ✅ Agora está pago!
         await agendamento.save();
 
-        res.json({ mensagem: "Pagamento confirmado e agendamento atualizado!" });
+        return { mensagem: "Pagamento confirmado e agendamento atualizado!" };
     } catch (error) {
         console.error("Erro ao confirmar pagamento:", error);
-        res.status(500).json({ erro: "Erro ao atualizar agendamento." });
+        throw new Error("Erro ao atualizar agendamento.");
     }
-});
-
+};
