@@ -2,6 +2,7 @@ import express from "express";
 import axios from "axios";
 import dotenv from "dotenv";
 import crypto from "crypto";
+import Agendamento from "../models/agendamentoModel"; // 🔹 Certifique-se de importar o modelo do agendamento
 
 dotenv.config();
 
@@ -77,7 +78,7 @@ router.post("/webhook-pix", async (req, res) => {
         const telefone = paymentResponse.data.payer.phone.number; // Pegando o telefone do pagador
 
         if (status === "approved") {
-            // Atualizar o status do agendamento no MongoDB
+            // Atualizar o status do pagamento no MongoDB
             await Agendamento.findOneAndUpdate(
                 { telefone: telefone }, // Encontra o agendamento pelo telefone
                 { pago: true } // Atualiza para pago

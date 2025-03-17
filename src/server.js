@@ -21,6 +21,27 @@ app.use('/api', pixRoutes);
 // Rotas de agendamentos
 app.use('/agendamentos', agendamentoRoutes);
 
+//Rota de verificação de pagamento
+app.get("/verificar-pagamento", async (req, res) => {
+    try {
+        const { telefone } = req.query;
+        if (!telefone) {
+            return res.status(400).json({ error: "Telefone é obrigatório!" });
+        }
+
+        const agendamento = await Agendamento.findOne({ telefone });
+
+        if (!agendamento) {
+            return res.status(404).json({ error: "Agendamento não encontrado." });
+        }
+
+        res.json({ pago: agendamento.pago });
+    } catch (error) {
+        console.error("Erro ao verificar pagamento:", error);
+        res.status(500).json({ error: "Erro no servidor." });
+    }
+});
+
 const PORT = process.env.PORT || 8080;
 
 conectarBanco().then(() => {
