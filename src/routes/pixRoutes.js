@@ -1,6 +1,7 @@
 import express from "express";
 import axios from "axios";
 import dotenv from "dotenv";
+import crypto from "crypto";
 
 dotenv.config();
 
@@ -9,14 +10,14 @@ const router = express.Router();
 // Endpoint para gerar QR Code Pix via Mercado Pago
 router.post("/gerar-pix", async (req, res) => {
     try {
-        const { valor, email, cpf, telefone } = req.body; // Cliente pode enviar um desses três
+        const { valor, email, cpf, telefone } = req.body;
 
-        if (!valor || (!email && !cpf && !telefone)) {
-            return res.status(400).json({ error: "Valor e pelo menos um identificador (email, CPF ou telefone) são obrigatórios!" });
+        if (!valor) {
+            return res.status(400).json({ error: "O valor é obrigatório!" });
         }
 
-        // Criando o objeto `payer` baseado no que o cliente enviou
-        let payer = {};
+        // Criando o objeto `payer` corretamente
+        let payer = { email: "pagador@teste.com" }; // E-mail genérico caso nenhum seja enviado
         if (email) {
             payer.email = email;
         }
@@ -27,23 +28,25 @@ router.post("/gerar-pix", async (req, res) => {
             payer.phone = { area_code: telefone.substring(0, 2), number: telefone.substring(2) };
         }
 
+        const idempotencyKey = crypto.randomUUID(); // Gerando uma chave única
+
         const pixResponse = await axios.post(
             "https://api.mercadopago.com/v1/payments",
             {
-                transaction_amount: parseFloat(valor), // Valor em número
+                transaction_amount: parseFloat(valor),
                 payment_method_id: "pix",
-                payer: payer, // Dados do cliente
-                notification_url: `${process.env.WEBHOOK_URL}/webhook-pix` // URL para confirmar pagamento automático
+                payer: payer,
+                notification_url: `${process.env.WEBHOOK_URL}/webhook-pix`
             },
             {
                 headers: {
                     "Authorization": `Bearer ${process.env.MERCADO_PAGO_ACCESS_TOKEN}`,
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "X-Idempotency-Key": idempotencyKey // Garantindo idempotência
                 }
             }
         );
 
-        // Pegando os dados do QR Code Pix
         const qrCode = pixResponse.data.point_of_interaction.transaction_data.qr_code;
         const qrCodeImage = pixResponse.data.point_of_interaction.transaction_data.qr_code_base64;
 

@@ -27,12 +27,12 @@ export const buscarHorariosDisponiveis = async (data, barbeiro) => {
     const horariosBase = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
 
     try {
-        // Obtém os agendamentos apenas do barbeiro selecionado
+        // 🔹 Agora a busca é por data *e* barbeiro
         const agendamentosNoBanco = await Agendamento.find({ data, barbeiro });
 
         return horariosBase.map(hora => ({
             hora,
-            disponivel: !agendamentosNoBanco.some(a => a.hora === hora) // Bloqueia só se já houver um agendamento com esse barbeiro
+            disponivel: !agendamentosNoBanco.some(a => a.hora === hora) // 🔹 Bloqueia apenas se o mesmo barbeiro estiver agendado
         }));
     } catch (error) {
         console.error("Erro ao buscar horários:", error);
