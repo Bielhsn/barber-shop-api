@@ -15,7 +15,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-app.use('/api', pixRoutes); 
+app.use('/api', pixRoutes);  //Rotas do Pix
 app.use('/agendamentos', agendamentoRoutes); // ✅ A verificação de pagamento já está dentro dessa rota
 
 const PORT = process.env.PORT || 8080;
