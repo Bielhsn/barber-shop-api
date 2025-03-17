@@ -1,6 +1,6 @@
 import express from 'express'
 import { listarTodosAgendamentos, buscarHorariosDisponiveis, salvarAgendamento } from '../services/agendamentoService.js'
-import Agendamento from '../models/agendamentoModel.js'; // ✅ Nome correto
+import Agendamento from "../models/agendamentoModel.js";
 
 const router = express.Router()
 

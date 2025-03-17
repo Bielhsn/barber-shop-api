@@ -2,7 +2,7 @@ import express from "express";
 import axios from "axios";
 import dotenv from "dotenv";
 import crypto from "crypto";
-import Agendamento from "../models/agendamentoModel.js"; // 🔹 Certifique-se de importar o modelo do agendamento
+import Agendamento from "../models/agendamentoModel.js";
 
 dotenv.config();
 

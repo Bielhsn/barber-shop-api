@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import { conectarBanco } from './config/db.js';
 import agendamentoRoutes from './routes/agendamentoRoutes.js';
 import pixRoutes from "./routes/pixRoutes.js"; 
-import Agendamento from "./models/agendamentoModel.js"; // ✅ Nome correto
+import Agendamento from "../models/agendamentoModel.js";
 
 dotenv.config();
 
