@@ -9,7 +9,7 @@ dotenv.config();
 
 const app = express()
 app.use(cors({
-    origin: ["https://lmbarbearia.com.br", "https://lm.com.br"],
+    origin: ["https://barcellona.com.br", "https://barbeariabarcellona.com.br", "http://localhost:3000", "http://localhost:5173",],
     methods: "GET,POST,PUT,DELETE",
     credentials: true
 }))
