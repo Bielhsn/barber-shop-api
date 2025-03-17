@@ -59,10 +59,11 @@ router.post("/gerar-pix", async (req, res) => {
 });
 
 // Endpoint para receber notificações do Mercado Pago
+// Endpoint para receber notificações do Mercado Pago
 router.post("/webhook-pix", async (req, res) => {
     try {
-        const paymentId = req.body.data.id; // ID do pagamento enviado pelo Mercado Pago
-        
+        const paymentId = req.body.data.id;
+
         if (!paymentId) {
             return res.status(400).json({ error: "ID do pagamento não recebido!" });
         }
@@ -80,8 +81,9 @@ router.post("/webhook-pix", async (req, res) => {
         if (status === "approved") {
             // Atualizar o status do pagamento no MongoDB
             await Agendamento.findOneAndUpdate(
-                { telefone: telefone }, // Encontra o agendamento pelo telefone
-                { pago: true } // Atualiza para pago
+                { telefone: telefone },
+                { $set: { pago: true } }, // 🔹 Agora usa `$set` para marcar corretamente
+                { new: true }
             );
             console.log(`✅ Pagamento confirmado para ${telefone}`);
         }
