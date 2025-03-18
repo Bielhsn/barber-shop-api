@@ -14,25 +14,43 @@ const pixChaves = {
     "Vitor": "5583998017216" // Número do Vitor
 };
 
+const gerarPixCode = (chavePix, nomeRecebedor, cidade, valor, identificador) => {
+    return `00020126360014BR.GOV.BCB.PIX0114${chavePix}520400005303986540${valor.toFixed(2).replace('.', '')}5802BR5925${nomeRecebedor.toUpperCase()}6009${cidade.toUpperCase()}6212${identificador}6304`;
+};
+
+
 // Endpoint para gerar QR Code Pix via Mercado Pago
-router.post("/gerar-pix", async (req, res) => {
+router.post('/gerar-pix', async (req, res) => {
     try {
         const { valor, barbeiro } = req.body;
-        if (!valor) return res.status(400).json({ error: "O valor é obrigatório!" });
-        if (!barbeiro || !pixChaves[barbeiro]) return res.status(400).json({ error: "Barbeiro inválido!" });
 
-        const chavePix = pixChaves[barbeiro]; // 🔹 Seleciona a chave conforme o barbeiro
-        const nomeRecebedor = barbeiro.toUpperCase(); // 🔹 Nome do barbeiro em maiúsculas
-        const cidade = "SAO PAULO";
-        const identificador = "AGENDAMENTO123";
-        const valorFormatado = valor.toFixed(2).replace('.', ''); // 🔹 Formata o valor
+        if (!valor || !barbeiro) {
+            return res.status(400).json({ error: "Valor e barbeiro são obrigatórios!" });
+        }
 
-        // 🔹 Monta o código PIX para pagamento direto ao barbeiro
-        const pixCode = `00020126360014BR.GOV.BCB.PIX0114${chavePix}520400005303986540${valorFormatado}5802BR5920${nomeRecebedor}6009${cidade}62100510${identificador}6304ABCD`;
+        // Chaves Pix diferentes para cada barbeiro
+        const chavesPix = {
+            "Leandro": "5511966526732",
+            "Vitor": "5511987654321"
+        };
 
+        if (!chavesPix[barbeiro]) {
+            return res.status(400).json({ error: "Barbeiro não encontrado!" });
+        }
+
+        // Gerar código Pix com os dados do barbeiro
+        const pixCode = gerarPixCode(
+            chavesPix[barbeiro],
+            barbeiro, 
+            "Sao Paulo", 
+            valor, 
+            "AGENDAMENTO123"
+        );
+
+        // Gerar imagem QR Code
         const qrImage = await QRCode.toDataURL(pixCode);
 
-        res.json({ qrCode: pixCode, qrImage, barbeiro });
+        res.json({ qrCode: pixCode, qrImage });
     } catch (error) {
         console.error("Erro ao gerar QR Code:", error);
         res.status(500).json({ error: "Erro ao gerar QR Code" });
