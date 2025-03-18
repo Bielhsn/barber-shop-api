@@ -29,18 +29,19 @@ const calcularCRC16 = (payload) => {
     }
     return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
 };
-// Função para gerar o código Pix
+
 const gerarPixCode = (chavePix, nomeRecebedor, cidade, valor, identificador) => {
-    let valorFormatado = valor.toFixed(2).replace('.', '').padStart(4, '0'); // Corrige o valor
-    let identificadorFormatado = identificador.substring(0, 14).padEnd(14, ' '); // Garante 14 caracteres no identificador
+    let valorFormatado = valor.toFixed(2).replace('.', '').padStart(4, '0'); // Garante duas casas decimais
+    let nomeFormatado = nomeRecebedor.padEnd(25, ' ').substring(0, 25); // Nome com até 25 caracteres
+    let identificadorFormatado = identificador.substring(0, 14).padEnd(14, ' '); // Identificador com 14 caracteres exatos
 
     let payload = `000201` + 
         `26360014BR.GOV.BCB.PIX0114${chavePix}` + // Chave Pix
         `52040000` + // Código Merchant Category
         `5303986` + // Código de moeda (986 = BRL)
-        `54${valorFormatado}` + // Valor com duas casas decimais
+        `54${valorFormatado}` + // Valor do PIX
         `5802BR` + // Código do país
-        `59${nomeRecebedor.length.toString().padStart(2, '0')}${nomeRecebedor.toUpperCase()}` + // Nome do recebedor
+        `59${nomeFormatado.length.toString().padStart(2, '0')}${nomeFormatado}` + // Nome do recebedor
         `60${cidade.length.toString().padStart(2, '0')}${cidade.toUpperCase()}` + // Cidade
         `62${identificadorFormatado.length.toString().padStart(2, '0')}${identificadorFormatado}` + // Identificador
         `6304`; // CRC16 será adicionado depois
