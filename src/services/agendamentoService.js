@@ -43,10 +43,11 @@ export const buscarHorariosDisponiveis = async (data, barbeiro) => {
 // **Função para salvar um novo agendamento no banco**
 export const salvarAgendamento = async (agendamento) => {
     try {
-        const { data, hora, telefone, barbeiro } = agendamento;
+        const { nome, telefone, data, hora, servico, barbeiro } = agendamento;
 
-        console.log(`📢 Tentando agendar: ${telefone} para ${data} às ${hora}`);
+        console.log(`📢 Tentando agendar: ${telefone} para ${data} às ${hora} com ${barbeiro}`);
 
+        // Verifica se o horário já está ocupado para o mesmo barbeiro
         const ocupado = await Agendamento.findOne({ data, hora, barbeiro });
 
         if (ocupado) {
@@ -54,14 +55,19 @@ export const salvarAgendamento = async (agendamento) => {
             return false;
         }
 
-        // ✅ Agora define `pago: false` corretamente
+        // Criando um novo agendamento com todos os campos necessários
         const novoAgendamento = new Agendamento({
-            ...agendamento,
-            pago: false
+            nome,
+            telefone,
+            data,
+            hora,
+            servico,
+            barbeiro, // 🔹 Agora garantimos que o barbeiro será salvo
+            pago: false // 🔹 Sempre inicia como "false" até o pagamento ser confirmado
         });
 
         await novoAgendamento.save();
-        console.log(`✅ Agendamento salvo para ${telefone} - ${data} às ${hora}`);
+        console.log(`✅ Agendamento salvo: ${JSON.stringify(novoAgendamento, null, 2)}`);
 
         return novoAgendamento;
     } catch (error) {
