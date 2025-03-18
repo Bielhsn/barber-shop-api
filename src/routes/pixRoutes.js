@@ -2,7 +2,7 @@ import express from "express";
 import axios from "axios";
 import dotenv from "dotenv";
 import Agendamento from "../models/agendamentoModel.js";
-import qrcodepix from "qrcode-pix"; // ✅ Biblioteca confiável para PIX
+import * as qrcodepix from 'qrcode-pix';
 import QRCode from "qrcode";
 
 dotenv.config();
