@@ -3,29 +3,39 @@ import axios from "axios";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import Agendamento from "../models/agendamentoModel.js";
-import qrcode from "qrcode";
+import QRCode from 'qrcode';
 
 dotenv.config();
 
 const router = express.Router();
 
-const chavePix = "+5511966529732"; // 🔄 Substitua pelo seu número real
+const pixChaves = {
+    "Leandro": "5511966526732", // Número do Leandro
+    "Vitor": "5583998017216" // Número do Vitor
+};
 
 // Endpoint para gerar QR Code Pix via Mercado Pago
 router.post("/gerar-pix", async (req, res) => {
     try {
-        const valor = req.body.valor; // Opcional: se quiser incluir um valor fixo no PIX
+        const { valor, barbeiro } = req.body;
+        if (!valor) return res.status(400).json({ error: "O valor é obrigatório!" });
+        if (!barbeiro || !pixChaves[barbeiro]) return res.status(400).json({ error: "Barbeiro inválido!" });
 
-        // 🔹 Gerando código PIX no formato correto
-        let codigoPix = `00020126360014br.gov.bcb.pix0114${chavePix}5204000053039865802BR5903SeuNome6008SaoPaulo62120508RANDOMID6304ABCD`;
+        const chavePix = pixChaves[barbeiro]; // 🔹 Seleciona a chave conforme o barbeiro
+        const nomeRecebedor = barbeiro.toUpperCase(); // 🔹 Nome do barbeiro em maiúsculas
+        const cidade = "SAO PAULO";
+        const identificador = "AGENDAMENTO123";
+        const valorFormatado = valor.toFixed(2).replace('.', ''); // 🔹 Formata o valor
 
-        // 🔹 Gerando QR Code
-        const qrImage = await qrcode.toDataURL(codigoPix);
+        // 🔹 Monta o código PIX para pagamento direto ao barbeiro
+        const pixCode = `00020126360014BR.GOV.BCB.PIX0114${chavePix}520400005303986540${valorFormatado}5802BR5920${nomeRecebedor}6009${cidade}62100510${identificador}6304ABCD`;
 
-        res.json({ qrCode: codigoPix, qrImage });
+        const qrImage = await QRCode.toDataURL(pixCode);
+
+        res.json({ qrCode: pixCode, qrImage, barbeiro });
     } catch (error) {
-        console.error("Erro ao gerar QR Code PIX:", error);
-        res.status(500).json({ error: "Erro ao gerar QR Code PIX" });
+        console.error("Erro ao gerar QR Code:", error);
+        res.status(500).json({ error: "Erro ao gerar QR Code" });
     }
 });
 
