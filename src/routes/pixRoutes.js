@@ -33,13 +33,14 @@ const calcularCRC16 = (payload) => {
 
 const gerarPixCode = (chavePix, nomeRecebedor, cidade, valor, identificador) => {
     let valorFormatado = valor.toFixed(2).replace('.', '').padStart(4, '0'); // Exemplo: "540040" para 40.00 BRL
-    let nomeFormatado = nomeRecebedor.trim().slice(0, 25); // Remove espaços extras e limita 25 caracteres
-    let cidadeFormatada = cidade.trim().slice(0, 15); // Remove espaços extras e limita 15 caracteres
-    let identificadorFormatado = identificador.trim().slice(0, 25); // Remove espaços extras e limita 25 caracteres
+    let nomeFormatado = nomeRecebedor.trim().toUpperCase().slice(0, 25); // Nome do recebedor formatado corretamente
+    let cidadeFormatada = cidade.trim().toUpperCase().slice(0, 15); // Cidade formatada corretamente
+    let identificadorFormatado = identificador.trim().slice(0, 25); // Identificador formatado corretamente
 
     let payload = `000201` + 
+        `010212` + // Transação do tipo pagamento QR Code Estático
         `26360014BR.GOV.BCB.PIX0114${chavePix}` + // Chave Pix
-        `52040000` + // Código Merchant Category
+        `52040000` + // Código Merchant Category (fixo para CPF/CNPJ)
         `5303986` + // Código de moeda (986 = BRL)
         `54${valorFormatado}` + // Valor formatado
         `5802BR` + // Código do país
