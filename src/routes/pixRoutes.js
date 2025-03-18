@@ -1,20 +1,20 @@
 import express from "express";
 import axios from "axios";
 import dotenv from "dotenv";
-import crypto from "crypto";
+import QRCode from "qrcode";
 import Agendamento from "../models/agendamentoModel.js";
-import QRCode from 'qrcode';
 
 dotenv.config();
 
 const router = express.Router();
 
+// Chaves Pix dos barbeiros
 const pixChaves = {
-    "Leandro": "5511966526732", // Número do Leandro
-    "Vitor": "5583998017216" // Número do Vitor
+    "Leandro": "5511966526732",
+    "Vitor": "5583998017216"
 };
 
-// Função para calcular o CRC16 (necessário para validar o código PIX)
+// Função para calcular o CRC16
 const calcularCRC16 = (payload) => {
     let crc = 0xFFFF;
     for (let i = 0; i < payload.length; i++) {
@@ -30,15 +30,25 @@ const calcularCRC16 = (payload) => {
     return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
 };
 
+// Função para gerar o código Pix
 const gerarPixCode = (chavePix, nomeRecebedor, cidade, valor, identificador) => {
-    let payload = `00020126360014BR.GOV.BCB.PIX0114${chavePix}520400005303986540${valor.toFixed(2).replace('.', '')}5802BR5925${nomeRecebedor.toUpperCase()}6009${cidade.toUpperCase()}6212${identificador}6304`;
-    
-    // Adiciona o CRC16 no final do código Pix
+    const valorFormatado = valor.toFixed(2).replace('.', '');
+    let payload = `000201` + // Payload Format Indicator
+        `26360014BR.GOV.BCB.PIX0114${chavePix}` + // Chave Pix
+        `52040000` + // Código do domicílio bancário
+        `5303986` + // Moeda (986 = BRL)
+        `540${valorFormatado.padStart(4, '0')}` + // Valor com 4 dígitos
+        `5802BR` + // País (BR)
+        `5925${nomeRecebedor.toUpperCase().substring(0, 25)}` + // Nome do recebedor (25 caracteres máx)
+        `6009${cidade.toUpperCase().substring(0, 15)}` + // Cidade do recebedor (15 caracteres máx)
+        `6212${identificador}` + // Identificador único da transação
+        `6304`; // Placeholder do CRC16
+
     let crc16 = calcularCRC16(payload);
     return `${payload}${crc16}`;
 };
 
-// Endpoint para gerar QR Code Pix via Mercado Pago
+// Endpoint para gerar QR Code Pix
 router.post('/gerar-pix', async (req, res) => {
     try {
         const { valor, barbeiro } = req.body;
@@ -47,22 +57,16 @@ router.post('/gerar-pix', async (req, res) => {
             return res.status(400).json({ error: "Valor e barbeiro são obrigatórios!" });
         }
 
-        // Chaves Pix diferentes para cada barbeiro
-        const chavesPix = {
-            "Leandro": "5511966526732",
-            "Vitor": "5583998017216"
-        };
-
-        if (!chavesPix[barbeiro]) {
+        if (!pixChaves[barbeiro]) {
             return res.status(400).json({ error: "Barbeiro não encontrado!" });
         }
 
-        // Gerar código Pix com os dados do barbeiro
+        // Gerar código Pix
         const pixCode = gerarPixCode(
-            chavesPix[barbeiro],
-            barbeiro, 
-            "Sao Paulo", 
-            valor, 
+            pixChaves[barbeiro],
+            barbeiro,
+            "Sao Paulo",
+            valor,
             "AGENDAMENTO123"
         );
 
@@ -102,13 +106,12 @@ router.post("/webhook-pix", async (req, res) => {
             return res.status(400).json({ error: "Telefone do pagador não encontrado!" });
         }
 
-        // 🔹 Remove qualquer formatação errada do telefone
         telefone = telefone.replace(/\D/g, '');
 
         console.log(`📞 Telefone do pagador: ${telefone} - Status: ${status}`);
 
         if (status === "approved") {
-            // ✅ Atualiza pagamento no banco
+            // Atualiza pagamento no banco
             const agendamento = await Agendamento.findOneAndUpdate(
                 { telefone: telefone },
                 { pago: true },
