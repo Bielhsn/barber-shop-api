@@ -16,12 +16,15 @@ router.get("/verificar-pagamento", async (req, res) => {
         const agendamento = await Agendamento.findOne({ telefone });
 
         if (!agendamento) {
+            console.error(`🚨 Nenhum agendamento encontrado para telefone: ${telefone}`);
             return res.status(404).json({ error: "Agendamento não encontrado." });
         }
 
+        console.log(`📢 Verificação de pagamento para ${telefone}:`, agendamento.pago);
         res.json({ pago: agendamento.pago || false });
+
     } catch (error) {
-        console.error("Erro ao verificar pagamento:", error);
+        console.error("❌ Erro ao verificar pagamento:", error);
         res.status(500).json({ error: "Erro no servidor." });
     }
 });

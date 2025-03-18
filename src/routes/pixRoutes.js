@@ -61,32 +61,55 @@ router.post("/gerar-pix", async (req, res) => {
 // Endpoint para receber notificações do Mercado Pago
 router.post("/webhook-pix", async (req, res) => {
     try {
-        const paymentId = req.body.data.id;
+        console.log("📩 Webhook recebido:", JSON.stringify(req.body, null, 2));
 
+        const paymentId = req.body.data?.id; // ID do pagamento enviado pelo Mercado Pago
+        
         if (!paymentId) {
+            console.error("🚨 ID do pagamento não recebido no webhook!");
             return res.status(400).json({ error: "ID do pagamento não recebido!" });
         }
 
+        console.log(`🔍 Consultando pagamento no Mercado Pago - ID: ${paymentId}`);
+
+        // Consultar o status do pagamento no Mercado Pago
         const paymentResponse = await axios.get(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
             headers: {
                 "Authorization": `Bearer ${process.env.MERCADO_PAGO_ACCESS_TOKEN}`
             }
         });
 
+        console.log("✅ Resposta do Mercado Pago:", JSON.stringify(paymentResponse.data, null, 2));
+
         const status = paymentResponse.data.status;
-        const telefone = paymentResponse.data.payer.phone.number;
+        const telefone = paymentResponse.data.payer?.phone?.number; // Pegando o telefone do pagador
+
+        if (!telefone) {
+            console.error("🚨 Nenhum telefone encontrado para o pagamento!");
+            return res.status(400).json({ error: "Telefone do pagador não encontrado!" });
+        }
+
+        console.log(`📞 Telefone do pagador: ${telefone} - Status do pagamento: ${status}`);
 
         if (status === "approved") {
-            await Agendamento.findOneAndUpdate(
-                { telefone: telefone },
-                { pago: true }
+            // Atualizar o status do pagamento no MongoDB
+            const agendamento = await Agendamento.findOneAndUpdate(
+                { telefone: telefone }, // Encontra o agendamento pelo telefone
+                { pago: true }, // Atualiza para pago
+                { new: true }
             );
+
+            if (!agendamento) {
+                console.error(`🚨 Nenhum agendamento encontrado para o telefone ${telefone}`);
+                return res.status(404).json({ error: "Agendamento não encontrado para este telefone!" });
+            }
+
             console.log(`✅ Pagamento confirmado para ${telefone}`);
         }
 
         res.sendStatus(200);
     } catch (error) {
-        console.error("Erro no webhook:", error.response?.data || error.message);
+        console.error("❌ Erro no webhook:", error.response?.data || error.message);
         res.sendStatus(500);
     }
 });
