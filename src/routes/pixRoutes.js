@@ -14,10 +14,29 @@ const pixChaves = {
     "Vitor": "5583998017216" // Número do Vitor
 };
 
-const gerarPixCode = (chavePix, nomeRecebedor, cidade, valor, identificador) => {
-    return `00020126360014BR.GOV.BCB.PIX0114${chavePix}520400005303986540${valor.toFixed(2).replace('.', '')}5802BR5925${nomeRecebedor.toUpperCase()}6009${cidade.toUpperCase()}6212${identificador}6304`;
+// Função para calcular o CRC16 (necessário para validar o código PIX)
+const calcularCRC16 = (payload) => {
+    let crc = 0xFFFF;
+    for (let i = 0; i < payload.length; i++) {
+        crc ^= payload.charCodeAt(i) << 8;
+        for (let j = 0; j < 8; j++) {
+            if ((crc & 0x8000) !== 0) {
+                crc = (crc << 1) ^ 0x1021;
+            } else {
+                crc <<= 1;
+            }
+        }
+    }
+    return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
 };
 
+const gerarPixCode = (chavePix, nomeRecebedor, cidade, valor, identificador) => {
+    let payload = `00020126360014BR.GOV.BCB.PIX0114${chavePix}520400005303986540${valor.toFixed(2).replace('.', '')}5802BR5925${nomeRecebedor.toUpperCase()}6009${cidade.toUpperCase()}6212${identificador}6304`;
+    
+    // Adiciona o CRC16 no final do código Pix
+    let crc16 = calcularCRC16(payload);
+    return `${payload}${crc16}`;
+};
 
 // Endpoint para gerar QR Code Pix via Mercado Pago
 router.post('/gerar-pix', async (req, res) => {
@@ -31,7 +50,7 @@ router.post('/gerar-pix', async (req, res) => {
         // Chaves Pix diferentes para cada barbeiro
         const chavesPix = {
             "Leandro": "5511966526732",
-            "Vitor": "5511987654321"
+            "Vitor": "5583998017216"
         };
 
         if (!chavesPix[barbeiro]) {
