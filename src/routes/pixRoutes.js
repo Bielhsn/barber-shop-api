@@ -2,18 +2,45 @@ import express from "express";
 import axios from "axios";
 import dotenv from "dotenv";
 import Agendamento from "../models/agendamentoModel.js";
-import qrcodepix from "qrcode-pix"; // Importação correta
+import qrcodepix from "qrcode-pix"; // Correta importação
 import QRCode from "qrcode";
 
 dotenv.config();
 
+// Inicializa o roteador do Express
 const router = express.Router();
 
+// Chaves Pix dos barbeiros
 const pixChaves = {
     "Leandro": "5511966526732",
     "Vitor": "5583998017216"
 };
 
+// **Testando geração do código Pix**
+async function testPix() {
+    try {
+        console.log("🔹 Testando geração do código Pix...");
+        
+        const pix = qrcodepix.default({
+            version: "01",
+            key: "5511966526732",
+            name: "LEANDRO",
+            city: "SAO PAULO",
+            transactionId: "AGENDAMENTO123",
+            amount: "40.00"
+        });
+
+        const payload = await pix.payload();
+        console.log("✅ Código Pix de Teste Gerado:", payload);
+    } catch (error) {
+        console.error("❌ Erro ao gerar código Pix de teste:", error);
+    }
+}
+
+// Executa o teste ao iniciar o servidor
+testPix();
+
+// **Função para gerar código Pix usando qrcode-pix**
 const gerarPixCode = async (chavePix, nomeRecebedor, cidade, valor) => {
     try {
         console.log("🔹 Gerando código PIX para:", chavePix, nomeRecebedor, cidade, valor);
@@ -39,7 +66,6 @@ const gerarPixCode = async (chavePix, nomeRecebedor, cidade, valor) => {
         return null;
     }
 };
-
 
 // **Endpoint para gerar QR Code Pix**
 router.post('/gerar-pix', async (req, res) => {
