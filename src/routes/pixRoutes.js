@@ -19,6 +19,8 @@ const pixChaves = {
 // **Função para gerar código Pix usando qrcode-pix**
 const gerarPixCode = async (chavePix, nomeRecebedor, cidade, valor) => {
     try {
+        console.log("🔹 Gerando código PIX para:", chavePix, nomeRecebedor, cidade, valor);
+
         const pix = qrcodepix({
             version: "01",
             key: chavePix,
@@ -28,12 +30,14 @@ const gerarPixCode = async (chavePix, nomeRecebedor, cidade, valor) => {
             amount: valor.toFixed(2)
         });
 
-        const pixPayload = await pix.payload(); // Aguarda a resposta do Pix
-        console.log("Código Pix Gerado:", pixPayload); // 🔹 Debug no console
+        console.log("✅ Objeto PIX criado!");
+
+        const pixPayload = await pix.payload();
+        console.log("✅ Código Pix Gerado:", pixPayload);
 
         return pixPayload;
     } catch (error) {
-        console.error("Erro ao gerar código PIX:", error);
+        console.error("❌ Erro ao gerar código PIX:", error);
         return null;
     }
 };
