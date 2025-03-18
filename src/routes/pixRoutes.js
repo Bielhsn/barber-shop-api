@@ -2,8 +2,7 @@ import express from "express";
 import axios from "axios";
 import dotenv from "dotenv";
 import Agendamento from "../models/agendamentoModel.js";
-import * as qrcodepix from 'qrcode-pix';
-console.log(qrcodepix);
+import qrcodepix from "qrcode-pix"; // Correta importação
 import QRCode from "qrcode";
 
 dotenv.config();
@@ -22,14 +21,17 @@ const gerarPixCode = async (chavePix, nomeRecebedor, cidade, valor) => {
     try {
         const pix = qrcodepix({
             version: "01",
-            key: chavePix, 
+            key: chavePix,
             name: nomeRecebedor.substring(0, 25), 
             city: cidade.substring(0, 15), 
             transactionId: "AGENDAMENTO123",
             amount: valor.toFixed(2)
         });
 
-        return await pix.payload(); // Retorna o código PIX válido
+        const pixPayload = await pix.payload(); // Aguarda a resposta do Pix
+        console.log("Código Pix Gerado:", pixPayload); // 🔹 Debug no console
+
+        return pixPayload;
     } catch (error) {
         console.error("Erro ao gerar código PIX:", error);
         return null;
