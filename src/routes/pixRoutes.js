@@ -2,10 +2,13 @@ import express from "express";
 import axios from "axios";
 import dotenv from "dotenv";
 import Agendamento from "../models/agendamentoModel.js";
-import { Pix } from "pix-utils"; // Biblioteca correta para gerar Pix
+import pkg from "pix-utils";
 import QRCode from "qrcode";
 
 dotenv.config();
+
+// Importa a classe Pix do pacote pix-utils
+const { Pix } = pkg;
 
 // Inicializa o roteador do Express
 const router = express.Router();
