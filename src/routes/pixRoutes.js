@@ -6,6 +6,7 @@ import Agendamento from "../models/agendamentoModel.js";
 
 dotenv.config();
 
+// Inicializa o roteador do Express
 const router = express.Router();
 
 // Chaves Pix dos barbeiros
