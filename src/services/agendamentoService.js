@@ -54,9 +54,10 @@ export const salvarAgendamento = async (agendamento) => {
             return false;
         }
 
+        // ✅ Agora define `pago: false` corretamente
         const novoAgendamento = new Agendamento({
             ...agendamento,
-            pago: false // ✅ O pagamento começa como falso
+            pago: false
         });
 
         await novoAgendamento.save();

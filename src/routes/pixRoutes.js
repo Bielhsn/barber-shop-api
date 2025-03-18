@@ -69,40 +69,40 @@ router.post("/webhook-pix", async (req, res) => {
             return res.status(400).json({ error: "ID do pagamento não recebido!" });
         }
 
-        console.log(`🔍 Buscando pagamento ID: ${paymentId}`);
-
-        // Consultar o status do pagamento
+        // Consultar o status do pagamento no Mercado Pago
         const paymentResponse = await axios.get(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
             headers: {
                 "Authorization": `Bearer ${process.env.MERCADO_PAGO_ACCESS_TOKEN}`
             }
         });
 
-        console.log("✅ Resposta do Mercado Pago:", JSON.stringify(paymentResponse.data, null, 2));
-
         const status = paymentResponse.data.status;
-        const telefone = paymentResponse.data.payer?.phone?.number;
+        let telefone = paymentResponse.data.payer?.phone?.number;
 
         if (!telefone) {
-            console.error("🚨 Nenhum telefone encontrado para o pagamento!");
+            console.error("🚨 Nenhum telefone encontrado no webhook!");
             return res.status(400).json({ error: "Telefone do pagador não encontrado!" });
         }
 
-        console.log(`📞 Telefone do pagador: ${telefone} - Status do pagamento: ${status}`);
+        // 🔹 Remove qualquer formatação errada do telefone
+        telefone = telefone.replace(/\D/g, '');
+
+        console.log(`📞 Telefone do pagador: ${telefone} - Status: ${status}`);
 
         if (status === "approved") {
+            // ✅ Atualiza pagamento no banco
             const agendamento = await Agendamento.findOneAndUpdate(
-                { telefone: telefone }, 
-                { pago: true }, 
+                { telefone: telefone },
+                { pago: true },
                 { new: true }
             );
 
             if (!agendamento) {
-                console.error(`🚨 Nenhum agendamento encontrado para o telefone ${telefone}`);
-                return res.status(404).json({ error: "Agendamento não encontrado para este telefone!" });
+                console.error(`🚨 Nenhum agendamento encontrado para telefone ${telefone}`);
+                return res.status(404).json({ error: "Agendamento não encontrado!" });
             }
 
-            console.log(`✅ Pagamento confirmado para ${telefone}`);
+            console.log(`✅ Pagamento confirmado para telefone ${telefone}`);
         }
 
         res.sendStatus(200);
