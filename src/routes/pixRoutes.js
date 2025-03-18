@@ -63,16 +63,15 @@ router.post("/webhook-pix", async (req, res) => {
     try {
         console.log("📩 Webhook recebido:", JSON.stringify(req.body, null, 2));
 
-        const paymentId = req.body.data?.id; // ID do pagamento enviado pelo Mercado Pago
-        
+        const paymentId = req.body.data?.id;
         if (!paymentId) {
             console.error("🚨 ID do pagamento não recebido no webhook!");
             return res.status(400).json({ error: "ID do pagamento não recebido!" });
         }
 
-        console.log(`🔍 Consultando pagamento no Mercado Pago - ID: ${paymentId}`);
+        console.log(`🔍 Buscando pagamento ID: ${paymentId}`);
 
-        // Consultar o status do pagamento no Mercado Pago
+        // Consultar o status do pagamento
         const paymentResponse = await axios.get(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
             headers: {
                 "Authorization": `Bearer ${process.env.MERCADO_PAGO_ACCESS_TOKEN}`
@@ -82,7 +81,7 @@ router.post("/webhook-pix", async (req, res) => {
         console.log("✅ Resposta do Mercado Pago:", JSON.stringify(paymentResponse.data, null, 2));
 
         const status = paymentResponse.data.status;
-        const telefone = paymentResponse.data.payer?.phone?.number; // Pegando o telefone do pagador
+        const telefone = paymentResponse.data.payer?.phone?.number;
 
         if (!telefone) {
             console.error("🚨 Nenhum telefone encontrado para o pagamento!");
@@ -92,10 +91,9 @@ router.post("/webhook-pix", async (req, res) => {
         console.log(`📞 Telefone do pagador: ${telefone} - Status do pagamento: ${status}`);
 
         if (status === "approved") {
-            // Atualizar o status do pagamento no MongoDB
             const agendamento = await Agendamento.findOneAndUpdate(
-                { telefone: telefone }, // Encontra o agendamento pelo telefone
-                { pago: true }, // Atualiza para pago
+                { telefone: telefone }, 
+                { pago: true }, 
                 { new: true }
             );
 

@@ -43,25 +43,28 @@ export const buscarHorariosDisponiveis = async (data, barbeiro) => {
 // **Função para salvar um novo agendamento no banco**
 export const salvarAgendamento = async (agendamento) => {
     try {
-        const { data, hora, barbeiro } = agendamento;
+        const { data, hora, telefone, barbeiro } = agendamento;
 
-        // Verifica se o barbeiro já tem um agendamento nesse horário
+        console.log(`📢 Tentando agendar: ${telefone} para ${data} às ${hora}`);
+
         const ocupado = await Agendamento.findOne({ data, hora, barbeiro });
 
         if (ocupado) {
-            return false; // ⛔ Horário já ocupado por esse barbeiro
+            console.error(`🚨 Horário já ocupado: ${data} às ${hora}`);
+            return false;
         }
 
-        // Define o status como "pendente" até a confirmação do pagamento
         const novoAgendamento = new Agendamento({
             ...agendamento,
-            status: "pendente" 
+            pago: false // ✅ O pagamento começa como falso
         });
 
         await novoAgendamento.save();
-        return novoAgendamento; // Retorna o agendamento criado
+        console.log(`✅ Agendamento salvo para ${telefone} - ${data} às ${hora}`);
+
+        return novoAgendamento;
     } catch (error) {
-        console.error("Erro ao salvar agendamento no MongoDB:", error);
+        console.error("❌ Erro ao salvar agendamento no MongoDB:", error);
         return false;
     }
 };

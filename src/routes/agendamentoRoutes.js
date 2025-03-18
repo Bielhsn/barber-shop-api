@@ -13,14 +13,16 @@ router.get("/verificar-pagamento", async (req, res) => {
             return res.status(400).json({ error: "Telefone é obrigatório!" });
         }
 
+        console.log(`🔍 Buscando pagamento para telefone: ${telefone}`);
+
         const agendamento = await Agendamento.findOne({ telefone });
 
         if (!agendamento) {
-            console.error(`🚨 Nenhum agendamento encontrado para telefone: ${telefone}`);
+            console.log(`🚨 Nenhum agendamento encontrado para telefone ${telefone}`);
             return res.status(404).json({ error: "Agendamento não encontrado." });
         }
 
-        console.log(`📢 Verificação de pagamento para ${telefone}:`, agendamento.pago);
+        console.log(`📢 Status do pagamento: ${agendamento.pago}`);
         res.json({ pago: agendamento.pago || false });
 
     } catch (error) {
