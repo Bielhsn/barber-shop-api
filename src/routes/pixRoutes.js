@@ -3,58 +3,29 @@ import axios from "axios";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import Agendamento from "../models/agendamentoModel.js";
+import qrcode from "qrcode";
 
 dotenv.config();
 
 const router = express.Router();
 
+const chavePix = "+5511966529732"; // 🔄 Substitua pelo seu número real
+
 // Endpoint para gerar QR Code Pix via Mercado Pago
 router.post("/gerar-pix", async (req, res) => {
     try {
-        const { valor, email, cpf, telefone } = req.body;
+        const valor = req.body.valor; // Opcional: se quiser incluir um valor fixo no PIX
 
-        if (!valor) {
-            return res.status(400).json({ error: "O valor é obrigatório!" });
-        }
+        // 🔹 Gerando código PIX no formato correto
+        let codigoPix = `00020126360014br.gov.bcb.pix0114${chavePix}5204000053039865802BR5903SeuNome6008SaoPaulo62120508RANDOMID6304ABCD`;
 
-        // Criando o objeto `payer` corretamente
-        let payer = { email: "pagador@teste.com" }; // E-mail genérico caso nenhum seja enviado
-        if (email) {
-            payer.email = email;
-        }
-        if (cpf) {
-            payer.identification = { type: "CPF", number: cpf };
-        }
-        if (telefone) {
-            payer.phone = { area_code: telefone.substring(0, 2), number: telefone.substring(2) };
-        }
+        // 🔹 Gerando QR Code
+        const qrImage = await qrcode.toDataURL(codigoPix);
 
-        const idempotencyKey = crypto.randomUUID(); // Gerando uma chave única
-
-        const pixResponse = await axios.post(
-            "https://api.mercadopago.com/v1/payments",
-            {
-                transaction_amount: parseFloat(valor),
-                payment_method_id: "pix",
-                payer: payer,
-                notification_url: `${process.env.WEBHOOK_URL}/webhook-pix`
-            },
-            {
-                headers: {
-                    "Authorization": `Bearer ${process.env.MERCADO_PAGO_ACCESS_TOKEN}`,
-                    "Content-Type": "application/json",
-                    "X-Idempotency-Key": idempotencyKey // Garantindo idempotência
-                }
-            }
-        );
-
-        const qrCode = pixResponse.data.point_of_interaction.transaction_data.qr_code;
-        const qrCodeImage = pixResponse.data.point_of_interaction.transaction_data.qr_code_base64;
-
-        return res.json({ qrCode, qrImage: qrCodeImage });
+        res.json({ qrCode: codigoPix, qrImage });
     } catch (error) {
-        console.error("Erro ao gerar o Pix:", error.response?.data || error.message);
-        return res.status(500).json({ error: "Erro ao gerar o QR Code Pix" });
+        console.error("Erro ao gerar QR Code PIX:", error);
+        res.status(500).json({ error: "Erro ao gerar QR Code PIX" });
     }
 });
 
