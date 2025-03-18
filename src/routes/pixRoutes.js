@@ -30,24 +30,25 @@ const calcularCRC16 = (payload) => {
     return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
 };
 
-// Função para gerar o código Pix
 const gerarPixCode = (chavePix, nomeRecebedor, cidade, valor, identificador) => {
+    let valorFormatado = valor.toFixed(2).replace('.', '').padStart(4, '0'); // Corrige o valor
+    let identificadorFormatado = identificador.substring(0, 14).padEnd(14, ' '); // Garante 14 caracteres no identificador
+
     let payload = `000201` + 
         `26360014BR.GOV.BCB.PIX0114${chavePix}` + // Chave Pix
-        `52040000` + // Código de Merchant Category (fixo para transações pessoais)
+        `52040000` + // Código Merchant Category
         `5303986` + // Código de moeda (986 = BRL)
-        `54${valor.toFixed(2).replace('.', '').padStart(4, '0')}` + // Valor formatado
-        `5802BR` + // Código do país (Brasil)
-        `59${nomeRecebedor.length.toString().padStart(2, '0')}${nomeRecebedor.toUpperCase()}` + // Nome do recebedor (até 25 caracteres)
+        `54${valorFormatado}` + // Valor com duas casas decimais
+        `5802BR` + // Código do país
+        `59${nomeRecebedor.length.toString().padStart(2, '0')}${nomeRecebedor.toUpperCase()}` + // Nome do recebedor
         `60${cidade.length.toString().padStart(2, '0')}${cidade.toUpperCase()}` + // Cidade
-        `62${identificador.length.toString().padStart(2, '0')}${identificador}` + // Identificador
+        `62${identificadorFormatado.length.toString().padStart(2, '0')}${identificadorFormatado}` + // Identificador
         `6304`; // CRC16 será adicionado depois
 
     let crc16 = calcularCRC16(payload);
     return `${payload}${crc16}`;
 };
 
-// Endpoint para gerar QR Code Pix
 // Endpoint para gerar QR Code Pix
 router.post('/gerar-pix', async (req, res) => {
     try {
