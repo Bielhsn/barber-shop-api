@@ -32,22 +32,22 @@ const calcularCRC16 = (payload) => {
 
 // Função para gerar o código Pix
 const gerarPixCode = (chavePix, nomeRecebedor, cidade, valor, identificador) => {
-    const valorFormatado = valor.toFixed(2).replace('.', '');
-    let payload = `000201` + // Payload Format Indicator
+    let payload = `000201` + 
         `26360014BR.GOV.BCB.PIX0114${chavePix}` + // Chave Pix
-        `52040000` + // Código do domicílio bancário
-        `5303986` + // Moeda (986 = BRL)
-        `540${valorFormatado.padStart(4, '0')}` + // Valor com 4 dígitos
-        `5802BR` + // País (BR)
-        `5925${nomeRecebedor.toUpperCase().substring(0, 25)}` + // Nome do recebedor (25 caracteres máx)
-        `6009${cidade.toUpperCase().substring(0, 15)}` + // Cidade do recebedor (15 caracteres máx)
-        `6212${identificador}` + // Identificador único da transação
-        `6304`; // Placeholder do CRC16
+        `52040000` + // Código de Merchant Category (fixo para transações pessoais)
+        `5303986` + // Código de moeda (986 = BRL)
+        `54${valor.toFixed(2).replace('.', '').padStart(4, '0')}` + // Valor formatado
+        `5802BR` + // Código do país (Brasil)
+        `59${nomeRecebedor.length.toString().padStart(2, '0')}${nomeRecebedor.toUpperCase()}` + // Nome do recebedor (até 25 caracteres)
+        `60${cidade.length.toString().padStart(2, '0')}${cidade.toUpperCase()}` + // Cidade
+        `62${identificador.length.toString().padStart(2, '0')}${identificador}` + // Identificador
+        `6304`; // CRC16 será adicionado depois
 
     let crc16 = calcularCRC16(payload);
     return `${payload}${crc16}`;
 };
 
+// Endpoint para gerar QR Code Pix
 // Endpoint para gerar QR Code Pix
 router.post('/gerar-pix', async (req, res) => {
     try {
@@ -57,20 +57,25 @@ router.post('/gerar-pix', async (req, res) => {
             return res.status(400).json({ error: "Valor e barbeiro são obrigatórios!" });
         }
 
-        if (!pixChaves[barbeiro]) {
+        const chavesPix = {
+            "Leandro": "5511966526732",
+            "Vitor": "5583998017216"
+        };
+
+        if (!chavesPix[barbeiro]) {
             return res.status(400).json({ error: "Barbeiro não encontrado!" });
         }
 
-        // Gerar código Pix
+        // ✅ Gerar código Pix com a função corrigida
         const pixCode = gerarPixCode(
-            pixChaves[barbeiro],
-            barbeiro,
-            "Sao Paulo",
-            valor,
-            "AGENDAMENTO123"
+            chavesPix[barbeiro], // Chave Pix correta do barbeiro
+            barbeiro, // Nome do recebedor
+            "SAO PAULO", // Cidade do pagamento
+            valor, // Valor do PIX
+            "AGENDAMENTO123" // Identificador único
         );
 
-        // Gerar imagem QR Code
+        // ✅ Gerar imagem QR Code
         const qrImage = await QRCode.toDataURL(pixCode);
 
         res.json({ qrCode: pixCode, qrImage });
