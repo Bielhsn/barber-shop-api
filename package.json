@@ -14,7 +14,8 @@
         "mercadopago": "^2.3.0",
         "mongoose": "^8.12.1",
         "pix-utils": "^2.6.0",
-        "qrcode": "^1.5.4"
+        "qrcode": "^1.5.4",
+        "qrcode-pix": "^5.0.0"
     },
     "devDependencies": {
         "nodemon": "^2.0.22"

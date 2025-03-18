@@ -2,13 +2,10 @@ import express from "express";
 import axios from "axios";
 import dotenv from "dotenv";
 import Agendamento from "../models/agendamentoModel.js";
-import pkg from "pix-utils";
+import qrcodepix from "qrcode-pix"; // ✅ Biblioteca confiável para PIX
 import QRCode from "qrcode";
 
 dotenv.config();
-
-// Importa a classe Pix do pacote pix-utils
-const { Pix } = pkg;
 
 // Inicializa o roteador do Express
 const router = express.Router();
@@ -19,20 +16,26 @@ const pixChaves = {
     "Vitor": "5583998017216"
 };
 
-const gerarPixCode = (chavePix, nomeRecebedor, cidade, valor) => {
-    const pix = new Pix({
-        version: "01",
-        key: chavePix,
-        name: nomeRecebedor.toUpperCase().substring(0, 25), // No máximo 25 caracteres
-        city: cidade.toUpperCase().substring(0, 15), // No máximo 15 caracteres
-        amount: valor.toFixed(2),
-        transactionId: "AGENDAMENTO123" // Identificador do pagamento
-    });
+// **Função para gerar código Pix usando qrcode-pix**
+const gerarPixCode = async (chavePix, nomeRecebedor, cidade, valor) => {
+    try {
+        const pix = qrcodepix({
+            version: "01",
+            key: chavePix, 
+            name: nomeRecebedor.substring(0, 25), 
+            city: cidade.substring(0, 15), 
+            transactionId: "AGENDAMENTO123",
+            amount: valor.toFixed(2)
+        });
 
-    return pix.getPayload(); // Retorna o código PIX válido
+        return await pix.payload(); // Retorna o código PIX válido
+    } catch (error) {
+        console.error("Erro ao gerar código PIX:", error);
+        return null;
+    }
 };
 
-// Endpoint para gerar QR Code Pix
+// **Endpoint para gerar QR Code Pix**
 router.post('/gerar-pix', async (req, res) => {
     try {
         const { valor, barbeiro } = req.body;
@@ -45,12 +48,15 @@ router.post('/gerar-pix', async (req, res) => {
             return res.status(400).json({ error: "Barbeiro não encontrado!" });
         }
 
-        // Gera o código PIX com pix-utils
-        const pixCode = gerarPixCode(pixChaves[barbeiro], barbeiro, "São Paulo", valor);
+        // **Gera o código PIX**
+        const pixCode = await gerarPixCode(pixChaves[barbeiro], barbeiro, "Sao Paulo", valor);
+        if (!pixCode) {
+            return res.status(500).json({ error: "Erro ao gerar código PIX" });
+        }
 
-        console.log("Código Pix Gerado:", pixCode); // Para debug no Railway
+        console.log("Código Pix Gerado:", pixCode); // Debug no Railway
 
-        // Gera o QR Code
+        // **Gera o QR Code**
         const qrImage = await QRCode.toDataURL(pixCode);
 
         res.json({ qrCode: pixCode, qrImage });
