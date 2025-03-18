@@ -3,6 +3,7 @@ import axios from "axios";
 import dotenv from "dotenv";
 import Agendamento from "../models/agendamentoModel.js";
 import * as qrcodepix from 'qrcode-pix';
+console.log(qrcodepix);
 import QRCode from "qrcode";
 
 dotenv.config();
