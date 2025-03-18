@@ -34,7 +34,8 @@ const calcularCRC16 = (payload) => {
 const gerarPixCode = (chavePix, nomeRecebedor, cidade, valor, identificador) => {
     let valorFormatado = valor.toFixed(2).replace('.', '').padStart(4, '0'); // Exemplo: "540040" para 40.00 BRL
     let nomeFormatado = nomeRecebedor.trim().slice(0, 25); // Remove espaços extras e limita 25 caracteres
-    let identificadorFormatado = identificador.slice(0, 14).padEnd(14, ' '); // Garante 14 caracteres exatos
+    let cidadeFormatada = cidade.trim().slice(0, 15); // Remove espaços extras e limita 15 caracteres
+    let identificadorFormatado = identificador.trim().slice(0, 25); // Remove espaços extras e limita 25 caracteres
 
     let payload = `000201` + 
         `26360014BR.GOV.BCB.PIX0114${chavePix}` + // Chave Pix
@@ -43,8 +44,8 @@ const gerarPixCode = (chavePix, nomeRecebedor, cidade, valor, identificador) => 
         `54${valorFormatado}` + // Valor formatado
         `5802BR` + // Código do país
         `59${nomeFormatado.length.toString().padStart(2, '0')}${nomeFormatado}` + // Nome do recebedor corrigido
-        `60${cidade.length.toString().padStart(2, '0')}${cidade.toUpperCase()}` + // Cidade
-        `62${identificadorFormatado.length.toString().padStart(2, '0')}${identificadorFormatado}` + // Identificador
+        `60${cidadeFormatada.length.toString().padStart(2, '0')}${cidadeFormatada}` + // Cidade corrigida
+        `62${identificadorFormatado.length.toString().padStart(2, '0')}${identificadorFormatado}` + // Identificador corrigido
         `6304`; // CRC16 será adicionado depois
 
     let crc16 = calcularCRC16(payload);
