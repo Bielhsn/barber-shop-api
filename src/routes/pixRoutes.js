@@ -59,7 +59,6 @@ router.post("/gerar-pix", async (req, res) => {
 });
 
 // Endpoint para receber notificações do Mercado Pago
-// Endpoint para receber notificações do Mercado Pago
 router.post("/webhook-pix", async (req, res) => {
     try {
         const paymentId = req.body.data.id;
@@ -68,7 +67,6 @@ router.post("/webhook-pix", async (req, res) => {
             return res.status(400).json({ error: "ID do pagamento não recebido!" });
         }
 
-        // Consultar o status do pagamento no Mercado Pago
         const paymentResponse = await axios.get(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
             headers: {
                 "Authorization": `Bearer ${process.env.MERCADO_PAGO_ACCESS_TOKEN}`
@@ -76,14 +74,12 @@ router.post("/webhook-pix", async (req, res) => {
         });
 
         const status = paymentResponse.data.status;
-        const telefone = paymentResponse.data.payer.phone.number; // Pegando o telefone do pagador
+        const telefone = paymentResponse.data.payer.phone.number;
 
         if (status === "approved") {
-            // Atualizar o status do pagamento no MongoDB
             await Agendamento.findOneAndUpdate(
                 { telefone: telefone },
-                { $set: { pago: true } }, // 🔹 Agora usa `$set` para marcar corretamente
-                { new: true }
+                { pago: true }
             );
             console.log(`✅ Pagamento confirmado para ${telefone}`);
         }

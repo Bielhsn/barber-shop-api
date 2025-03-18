@@ -19,7 +19,7 @@ router.get("/verificar-pagamento", async (req, res) => {
             return res.status(404).json({ error: "Agendamento não encontrado." });
         }
 
-        res.json({ pago: agendamento.pago || false }); // 🔹 Retorna `false` se `pago` não existir
+        res.json({ pago: agendamento.pago || false });
     } catch (error) {
         console.error("Erro ao verificar pagamento:", error);
         res.status(500).json({ error: "Erro no servidor." });
