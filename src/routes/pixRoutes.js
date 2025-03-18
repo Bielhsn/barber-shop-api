@@ -1,8 +1,9 @@
 import express from "express";
 import axios from "axios";
 import dotenv from "dotenv";
-import QRCode from "qrcode";
 import Agendamento from "../models/agendamentoModel.js";
+import { Pix } from "pix-utils"; // Biblioteca correta para gerar Pix
+import QRCode from "qrcode";
 
 dotenv.config();
 
@@ -15,42 +16,17 @@ const pixChaves = {
     "Vitor": "5583998017216"
 };
 
-// Função para calcular o CRC16
-const calcularCRC16 = (payload) => {
-    let crc = 0xFFFF;
-    for (let i = 0; i < payload.length; i++) {
-        crc ^= payload.charCodeAt(i) << 8;
-        for (let j = 0; j < 8; j++) {
-            if ((crc & 0x8000) !== 0) {
-                crc = (crc << 1) ^ 0x1021;
-            } else {
-                crc <<= 1;
-            }
-        }
-    }
-    return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
-};
+const gerarPixCode = (chavePix, nomeRecebedor, cidade, valor) => {
+    const pix = new Pix({
+        version: "01",
+        key: chavePix,
+        name: nomeRecebedor.toUpperCase().substring(0, 25), // No máximo 25 caracteres
+        city: cidade.toUpperCase().substring(0, 15), // No máximo 15 caracteres
+        amount: valor.toFixed(2),
+        transactionId: "AGENDAMENTO123" // Identificador do pagamento
+    });
 
-const gerarPixCode = (chavePix, nomeRecebedor, cidade, valor, identificador) => {
-    let valorFormatado = valor.toFixed(2).replace('.', '').padStart(4, '0'); // Exemplo: "540040" para 40.00 BRL
-    let nomeFormatado = nomeRecebedor.trim().toUpperCase().slice(0, 25); // Nome do recebedor formatado corretamente
-    let cidadeFormatada = cidade.trim().toUpperCase().slice(0, 15); // Cidade formatada corretamente
-    let identificadorFormatado = identificador.trim().slice(0, 25); // Identificador formatado corretamente
-
-    let payload = `000201` + 
-        `010212` + // Transação do tipo pagamento QR Code Estático
-        `26360014BR.GOV.BCB.PIX0114${chavePix}` + // Chave Pix
-        `52040000` + // Código Merchant Category (fixo para CPF/CNPJ)
-        `5303986` + // Código de moeda (986 = BRL)
-        `54${valorFormatado}` + // Valor formatado
-        `5802BR` + // Código do país
-        `59${nomeFormatado.length.toString().padStart(2, '0')}${nomeFormatado}` + // Nome do recebedor corrigido
-        `60${cidadeFormatada.length.toString().padStart(2, '0')}${cidadeFormatada}` + // Cidade corrigida
-        `62${identificadorFormatado.length.toString().padStart(2, '0')}${identificadorFormatado}` + // Identificador corrigido
-        `6304`; // CRC16 será adicionado depois
-
-    let crc16 = calcularCRC16(payload);
-    return `${payload}${crc16}`;
+    return pix.getPayload(); // Retorna o código PIX válido
 };
 
 // Endpoint para gerar QR Code Pix
@@ -62,27 +38,16 @@ router.post('/gerar-pix', async (req, res) => {
             return res.status(400).json({ error: "Valor e barbeiro são obrigatórios!" });
         }
 
-        const chavesPix = {
-            "Leandro": "5511966526732",
-            "Vitor": "5583998017216"
-        };
-
-        if (!chavesPix[barbeiro]) {
+        if (!pixChaves[barbeiro]) {
             return res.status(400).json({ error: "Barbeiro não encontrado!" });
         }
 
-        // ✅ Gerar código Pix com a função corrigida
-        const pixCode = gerarPixCode(
-            chavesPix[barbeiro], // Chave Pix correta do barbeiro
-            barbeiro, // Nome do recebedor
-            "SAO PAULO", // Cidade do pagamento
-            valor, // Valor do PIX
-            "AGENDAMENTO123" // Identificador único
-        );
+        // Gera o código PIX com pix-utils
+        const pixCode = gerarPixCode(pixChaves[barbeiro], barbeiro, "São Paulo", valor);
 
-        console.log("Código Pix Gerado:", pixCode);
+        console.log("Código Pix Gerado:", pixCode); // Para debug no Railway
 
-        // ✅ Gerar imagem QR Code
+        // Gera o QR Code
         const qrImage = await QRCode.toDataURL(pixCode);
 
         res.json({ qrCode: pixCode, qrImage });

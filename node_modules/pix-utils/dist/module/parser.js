@@ -1,0 +1,58 @@
+import { generatePixObject } from './assembler';
+import { computeCRC } from './crc';
+import { parseEmv } from './emvHandler';
+import { PixElementType, } from './types/pixElements';
+import { EmvAdditionalDataSchema, EmvMaiSchema, EmvSchema, } from './types/pixEmvSchema';
+import { generateErrorObject } from './utils/generateErrorObject';
+import { hasElementError, isPix } from './validate';
+export function parsePix(brCode) {
+    // Parse EMV Code
+    const emvElements = parseEmv({ emvCode: brCode });
+    if (!emvElements.isValid)
+        return generateErrorObject('invalid emv code');
+    // Validate CRC16
+    const crc = computeCRC(brCode);
+    if (crc !== emvElements.getTag(EmvSchema.TAG_CRC))
+        return generateErrorObject('invalid crc');
+    // Extract Elements
+    const elements = extractElements(emvElements);
+    if (hasElementError(elements))
+        return generateErrorObject(elements.message);
+    return generatePixObject(elements);
+}
+export function extractMandatoryElements(emvElements) {
+    return {
+        merchantCategoryCode: emvElements.getTag(EmvSchema.TAG_MCC),
+        transactionCurrency: emvElements.getTag(EmvSchema.TAG_TRANSACTION_CURRENCY),
+        countryCode: emvElements.getTag(EmvSchema.TAG_COUNTRY_CODE),
+        merchantName: emvElements.getTag(EmvSchema.TAG_MERCHANT_NAME),
+        merchantCity: emvElements.getTag(EmvSchema.TAG_MERCHANT_CITY),
+    };
+}
+export function extractElements(emvElements) {
+    const basicElements = extractMandatoryElements(emvElements);
+    if (isPix(emvElements, 'static')) {
+        const amountNumber = +emvElements.getTag(EmvSchema.TAG_TRANSACTION_AMOUNT);
+        const transactionAmount = !isNaN(amountNumber) ? amountNumber : 0;
+        return {
+            type: PixElementType.STATIC,
+            ...basicElements,
+            pixKey: emvElements.getSubTag(EmvMaiSchema.TAG_MAI_PIXKEY, EmvSchema.TAG_MAI),
+            transactionAmount,
+            infoAdicional: emvElements.getSubTag(EmvMaiSchema.TAG_MAI_INFO_ADD, EmvSchema.TAG_MAI),
+            txid: emvElements.getSubTag(EmvAdditionalDataSchema.TAG_TXID, EmvSchema.TAG_ADDITIONAL_DATA),
+            fss: emvElements.getSubTag(EmvMaiSchema.TAG_MAI_FSS, EmvSchema.TAG_MAI),
+        };
+    }
+    if (isPix(emvElements, 'dynamic')) {
+        return {
+            type: PixElementType.DYNAMIC,
+            ...basicElements,
+            url: emvElements.getSubTag(EmvMaiSchema.TAG_MAI_URL, EmvSchema.TAG_MAI),
+        };
+    }
+    if (!isPix(emvElements, 'pix') || !isPix(emvElements, 'valid'))
+        return generateErrorObject('invalid pix');
+    return generateErrorObject('error');
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoicGFyc2VyLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vc3JjL3BhcnNlci50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFBQSxPQUFPLEVBQUUsaUJBQWlCLEVBQUUsTUFBTSxhQUFhLENBQUM7QUFDaEQsT0FBTyxFQUFFLFVBQVUsRUFBRSxNQUFNLE9BQU8sQ0FBQztBQUNuQyxPQUFPLEVBQUUsUUFBUSxFQUFFLE1BQU0sY0FBYyxDQUFDO0FBQ3hDLE9BQU8sRUFFTCxjQUFjLEdBR2YsTUFBTSxxQkFBcUIsQ0FBQztBQUM3QixPQUFPLEVBQ0wsdUJBQXVCLEVBQ3ZCLFlBQVksRUFDWixTQUFTLEdBRVYsTUFBTSxzQkFBc0IsQ0FBQztBQUU5QixPQUFPLEVBQUUsbUJBQW1CLEVBQUUsTUFBTSw2QkFBNkIsQ0FBQztBQUNsRSxPQUFPLEVBQUUsZUFBZSxFQUFFLEtBQUssRUFBRSxNQUFNLFlBQVksQ0FBQztBQUVwRCxNQUFNLFVBQVUsUUFBUSxDQUFDLE1BQWM7SUFDckMsaUJBQWlCO0lBQ2pCLE1BQU0sV0FBVyxHQUFHLFFBQVEsQ0FBQyxFQUFFLE9BQU8sRUFBRSxNQUFNLEVBQUUsQ0FBQyxDQUFDO0lBQ2xELElBQUksQ0FBQyxXQUFXLENBQUMsT0FBTztRQUFFLE9BQU8sbUJBQW1CLENBQUMsa0JBQWtCLENBQUMsQ0FBQztJQUV6RSxpQkFBaUI7SUFDakIsTUFBTSxHQUFHLEdBQUcsVUFBVSxDQUFDLE1BQU0sQ0FBQyxDQUFDO0lBQy9CLElBQUksR0FBRyxLQUFLLFdBQVcsQ0FBQyxNQUFNLENBQUMsU0FBUyxDQUFDLE9BQU8sQ0FBQztRQUMvQyxPQUFPLG1CQUFtQixDQUFDLGFBQWEsQ0FBQyxDQUFDO0lBRTVDLG1CQUFtQjtJQUNuQixNQUFNLFFBQVEsR0FBRyxlQUFlLENBQUMsV0FBVyxDQUFDLENBQUM7SUFFOUMsSUFBSSxlQUFlLENBQUMsUUFBUSxDQUFDO1FBQUUsT0FBTyxtQkFBbUIsQ0FBQyxRQUFRLENBQUMsT0FBTyxDQUFDLENBQUM7SUFFNUUsT0FBTyxpQkFBaUIsQ0FBQyxRQUFRLENBQWUsQ0FBQztBQUNuRCxDQUFDO0FBRUQsTUFBTSxVQUFVLHdCQUF3QixDQUN0QyxXQUFzQjtJQUV0QixPQUFPO1FBQ0wsb0JBQW9CLEVBQUUsV0FBVyxDQUFDLE1BQU0sQ0FBQyxTQUFTLENBQUMsT0FBTyxDQUFDO1FBQzNELG1CQUFtQixFQUFFLFdBQVcsQ0FBQyxNQUFNLENBQUMsU0FBUyxDQUFDLHdCQUF3QixDQUFDO1FBQzNFLFdBQVcsRUFBRSxXQUFXLENBQUMsTUFBTSxDQUFDLFNBQVMsQ0FBQyxnQkFBZ0IsQ0FBQztRQUMzRCxZQUFZLEVBQUUsV0FBVyxDQUFDLE1BQU0sQ0FBQyxTQUFTLENBQUMsaUJBQWlCLENBQUM7UUFDN0QsWUFBWSxFQUFFLFdBQVcsQ0FBQyxNQUFNLENBQUMsU0FBUyxDQUFDLGlCQUFpQixDQUFDO0tBQzlELENBQUM7QUFDSixDQUFDO0FBRUQsTUFBTSxVQUFVLGVBQWUsQ0FDN0IsV0FBc0I7SUFFdEIsTUFBTSxhQUFhLEdBQUcsd0JBQXdCLENBQUMsV0FBVyxDQUFDLENBQUM7SUFDNUQsSUFBSSxLQUFLLENBQUMsV0FBVyxFQUFFLFFBQVEsQ0FBQyxFQUFFO1FBQ2hDLE1BQU0sWUFBWSxHQUFHLENBQUMsV0FBVyxDQUFDLE1BQU0sQ0FBQyxTQUFTLENBQUMsc0JBQXNCLENBQUMsQ0FBQztRQUMzRSxNQUFNLGlCQUFpQixHQUFHLENBQUMsS0FBSyxDQUFDLFlBQVksQ0FBQyxDQUFDLENBQUMsQ0FBQyxZQUFZLENBQUMsQ0FBQyxDQUFDLENBQUMsQ0FBQztRQUNsRSxPQUFPO1lBQ0wsSUFBSSxFQUFFLGNBQWMsQ0FBQyxNQUFNO1lBQzNCLEdBQUcsYUFBYTtZQUNoQixNQUFNLEVBQUUsV0FBVyxDQUFDLFNBQVMsQ0FDM0IsWUFBWSxDQUFDLGNBQWMsRUFDM0IsU0FBUyxDQUFDLE9BQU8sQ0FDbEI7WUFDRCxpQkFBaUI7WUFDakIsYUFBYSxFQUFFLFdBQVcsQ0FBQyxTQUFTLENBQ2xDLFlBQVksQ0FBQyxnQkFBZ0IsRUFDN0IsU0FBUyxDQUFDLE9BQU8sQ0FDbEI7WUFDRCxJQUFJLEVBQUUsV0FBVyxDQUFDLFNBQVMsQ0FDekIsdUJBQXVCLENBQUMsUUFBUSxFQUNoQyxTQUFTLENBQUMsbUJBQW1CLENBQzlCO1lBQ0QsR0FBRyxFQUFFLFdBQVcsQ0FBQyxTQUFTLENBQUMsWUFBWSxDQUFDLFdBQVcsRUFBRSxTQUFTLENBQUMsT0FBTyxDQUFDO1NBQ3hFLENBQUM7S0FDSDtJQUNELElBQUksS0FBSyxDQUFDLFdBQVcsRUFBRSxTQUFTLENBQUMsRUFBRTtRQUNqQyxPQUFPO1lBQ0wsSUFBSSxFQUFFLGNBQWMsQ0FBQyxPQUFPO1lBQzVCLEdBQUcsYUFBYTtZQUNoQixHQUFHLEVBQUUsV0FBVyxDQUFDLFNBQVMsQ0FBQyxZQUFZLENBQUMsV0FBVyxFQUFFLFNBQVMsQ0FBQyxPQUFPLENBQUM7U0FDeEUsQ0FBQztLQUNIO0lBQ0QsSUFBSSxDQUFDLEtBQUssQ0FBQyxXQUFXLEVBQUUsS0FBSyxDQUFDLElBQUksQ0FBQyxLQUFLLENBQUMsV0FBVyxFQUFFLE9BQU8sQ0FBQztRQUM1RCxPQUFPLG1CQUFtQixDQUFDLGFBQWEsQ0FBQyxDQUFDO0lBRTVDLE9BQU8sbUJBQW1CLENBQUMsT0FBTyxDQUFDLENBQUM7QUFDdEMsQ0FBQyJ9
