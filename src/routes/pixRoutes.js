@@ -75,6 +75,8 @@ router.post('/gerar-pix', async (req, res) => {
             "AGENDAMENTO123" // Identificador único
         );
 
+        console.log("Código Pix Gerado:", pixCode);
+
         // ✅ Gerar imagem QR Code
         const qrImage = await QRCode.toDataURL(pixCode);
 
