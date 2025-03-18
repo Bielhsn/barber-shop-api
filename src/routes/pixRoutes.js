@@ -29,7 +29,7 @@ const calcularCRC16 = (payload) => {
     }
     return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
 };
-
+// Função para gerar o código Pix
 const gerarPixCode = (chavePix, nomeRecebedor, cidade, valor, identificador) => {
     let valorFormatado = valor.toFixed(2).replace('.', '').padStart(4, '0'); // Corrige o valor
     let identificadorFormatado = identificador.substring(0, 14).padEnd(14, ' '); // Garante 14 caracteres no identificador
