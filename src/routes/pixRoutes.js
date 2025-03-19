@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import { Pix } from "faz-um-pix";
 import QRCode from "qrcode";
-import { buscarAgendamento } from "../services/agendamentoService";
+import buscarAgendamento  from "../services/agendamentoService";
 
 dotenv.config();
 
