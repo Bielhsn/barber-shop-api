@@ -93,3 +93,19 @@ export const confirmarPagamento = async (agendamentoId) => {
         throw new Error("Erro ao atualizar agendamento.");
     }
 };
+
+const buscarAgendamento = async (telefone, paymentId) => {
+    try {
+        let agendamento = await Agendamento.findOne({ telefone: telefone });
+
+        if (!agendamento) {
+            console.warn(`⚠️ Nenhum agendamento encontrado para telefone ${telefone}. Tentando buscar por paymentId ${paymentId}...`);
+            agendamento = await Agendamento.findOne({ paymentId: paymentId });
+        }
+
+        return agendamento;
+    } catch (error) {
+        console.error("❌ Erro ao buscar agendamento:", error);
+        return null;
+    }
+};

@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import { Pix } from "faz-um-pix";
 import QRCode from "qrcode";
+const { buscarAgendamento } = require("../services/agendamentoService");
 
 dotenv.config();
 
@@ -57,7 +58,6 @@ router.post('/gerar-pix', async (req, res) => {
     }
 });
 
-
 router.post("/webhook-pix", async (req, res) => {
     try {
         console.log("📩 Webhook recebido:", JSON.stringify(req.body, null, 2));
@@ -68,6 +68,8 @@ router.post("/webhook-pix", async (req, res) => {
             return res.status(400).json({ error: "ID do pagamento não recebido!" });
         }
 
+        console.log(`🔍 Consultando pagamento com ID: ${paymentId}`);
+
         // Consultar o status do pagamento no Mercado Pago
         const paymentResponse = await axios.get(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
             headers: {
@@ -76,31 +78,29 @@ router.post("/webhook-pix", async (req, res) => {
         });
 
         const status = paymentResponse.data.status;
-        let telefone = paymentResponse.data.payer?.phone?.number;
+        const telefone = paymentResponse.data.payer?.phone?.number;
+
+        console.log(`📞 Telefone do pagador recebido: ${telefone || "Não encontrado"} - Status: ${status}`);
 
         if (!telefone) {
             console.error("🚨 Nenhum telefone encontrado no webhook!");
             return res.status(400).json({ error: "Telefone do pagador não encontrado!" });
         }
 
-        telefone = telefone.replace(/\D/g, '');
+        const telefoneFormatado = telefone.replace(/\D/g, '');
 
-        console.log(`📞 Telefone do pagador: ${telefone} - Status: ${status}`);
+        console.log(`🔍 Buscando agendamento para telefone: ${telefoneFormatado}`);
 
         if (status === "approved") {
             // Atualiza pagamento no banco
-            const agendamento = await Agendamento.findOneAndUpdate(
-                { telefone: telefone },
-                { pago: true },
-                { new: true }
-            );
+            const agendamento = await buscarAgendamento(telefoneFormatado, paymentId);
 
             if (!agendamento) {
-                console.error(`🚨 Nenhum agendamento encontrado para telefone ${telefone}`);
+                console.error(`🚨 Nenhum agendamento encontrado para telefone ${telefoneFormatado}`);
                 return res.status(404).json({ error: "Agendamento não encontrado!" });
             }
 
-            console.log(`✅ Pagamento confirmado para telefone ${telefone}`);
+            console.log(`✅ Pagamento confirmado para telefone ${telefoneFormatado}`);
         }
 
         res.sendStatus(200);
