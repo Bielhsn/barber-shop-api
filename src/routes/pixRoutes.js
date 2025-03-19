@@ -17,21 +17,24 @@ const pixChaves = {
 // **Função para gerar código Pix usando qrcode-pix**
 const gerarPixCode = async (chavePix, nomeRecebedor, cidade, valor) => {
     try {
-        console.log("🔹 Gerando código PIX...");
-
-        const pix = new qrcodepix.QrCodePix({
-            version: "01",
-            key: chavePix.trim(), // Remove espaços extras
-            name: nomeRecebedor.substring(0, 25).trim(), // Máximo 25 caracteres
-            city: cidade.substring(0, 15).trim(), // Máximo 15 caracteres
-            transactionId: "1234567890ABCD", // Um ID de transação válido (máx. 25 caracteres)
-            amount: Number(valor).toFixed(2) // Garante duas casas decimais
-        });
-
-        console.log("✅ Objeto PIX criado!");
-
-        const pixPayload = await pix.payload();
-        console.log("✅ Código Pix Gerado:", pixPayload);
+        (async () => {
+            const { default: qrcodepix } = await import("qrcode-pix");
+        
+            // Corrigindo para usar qrcodepix.QrCodePix
+            const pix = new qrcodepix.QrCodePix({
+                version: "01",
+                key: "5511966526732",
+                name: "LEANDRO",
+                city: "SAO PAULO",
+                transactionId: "AGENDAMENTO123",
+                amount: "40.00"
+            });
+        
+            console.log("✅ Objeto PIX criado!");
+        
+            const payload = await pix.payload();
+            console.log("✅ Código Pix Gerado:", payload);
+        })();
 
         return pixPayload;
     } catch (error) {
