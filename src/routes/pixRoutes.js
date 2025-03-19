@@ -17,24 +17,21 @@ const pixChaves = {
 // **Função para gerar código Pix usando qrcode-pix**
 const gerarPixCode = async (chavePix, nomeRecebedor, cidade, valor) => {
     try {
-        (async () => {
-            const { default: qrcodepix } = await import("qrcode-pix");
-        
-            // Corrigindo para usar qrcodepix.QrCodePix
-            const pix = new qrcodepix.QrCodePix({
-                version: "01",
-                key: "5511966526732",
-                name: "LEANDRO",
-                city: "SAO PAULO",
-                transactionId: "AGENDAMENTO123",
-                amount: "40.00"
-            });
-        
-            console.log("✅ Objeto PIX criado!");
-        
-            const payload = await pix.payload();
-            console.log("✅ Código Pix Gerado:", payload);
-        })();
+        console.log("🔹 Gerando código PIX para:", chavePix, nomeRecebedor, cidade, valor);
+
+        const pix = new QrCodePix({
+            version: "01",
+            key: chavePix,
+            name: nomeRecebedor.substring(0, 25), 
+            city: cidade.substring(0, 15), 
+            transactionId: "AGENDAMENTO123",
+            amount: valor.toFixed(2)
+        });
+
+        console.log("✅ Objeto PIX criado!");
+
+        const pixPayload = await pix.payload();
+        console.log("✅ Código Pix Gerado:", pixPayload);
 
         return pixPayload;
     } catch (error) {
