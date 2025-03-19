@@ -94,7 +94,7 @@ export const confirmarPagamento = async (agendamentoId) => {
     }
 };
 
-const buscarAgendamento = async (telefone, paymentId) => {
+export const buscarAgendamento = async (telefone, paymentId) => {
     try {
         let agendamento = await Agendamento.findOne({ telefone: telefone });
 
