@@ -10,7 +10,7 @@ dotenv.config();
 const router = express.Router();
 
 const pixChaves = {
-    "Leandro": "5511953405078",
+    "Leandro": "5511966526732",
     "Vitor": "5583998017216"
 };
 
