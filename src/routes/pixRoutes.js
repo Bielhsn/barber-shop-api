@@ -58,7 +58,6 @@ router.post('/gerar-pix', async (req, res) => {
 });
 
 
-// Endpoint para receber notificações do Mercado Pago
 router.post("/webhook-pix", async (req, res) => {
     try {
         console.log("📩 Webhook recebido:", JSON.stringify(req.body, null, 2));

@@ -5,7 +5,6 @@ import Agendamento from "../models/agendamentoModel.js";
 const router = express.Router()
 
 // Endpoint correto para pegar horários disponíveis
-
 router.get("/verificar-pagamento", async (req, res) => {
     try {
         const { telefone } = req.query;
