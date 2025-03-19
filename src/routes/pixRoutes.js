@@ -17,15 +17,15 @@ const pixChaves = {
 // **Função para gerar código Pix usando qrcode-pix**
 const gerarPixCode = async (chavePix, nomeRecebedor, cidade, valor) => {
     try {
-        console.log("🔹 Gerando código PIX para:", chavePix, nomeRecebedor, cidade, valor);
+        console.log("🔹 Gerando código PIX...");
 
-        const pix = new QrCodePix({
+        const pix = new qrcodepix.QrCodePix({
             version: "01",
-            key: chavePix,
-            name: nomeRecebedor.substring(0, 25), 
-            city: cidade.substring(0, 15), 
-            transactionId: "AGENDAMENTO123",
-            amount: valor.toFixed(2)
+            key: chavePix.trim(), // Remove espaços extras
+            name: nomeRecebedor.substring(0, 25).trim(), // Máximo 25 caracteres
+            city: cidade.substring(0, 15).trim(), // Máximo 15 caracteres
+            transactionId: "1234567890ABCD", // Um ID de transação válido (máx. 25 caracteres)
+            amount: Number(valor).toFixed(2) // Garante duas casas decimais
         });
 
         console.log("✅ Objeto PIX criado!");
