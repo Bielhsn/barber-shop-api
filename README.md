@@ -1,6 +1,6 @@
 # 🏗️ Barber Shop API
 
-Este é o back-end da aplicação **Barber Shop**, responsável pelo gerenciamento dos agendamentos, pagamentos via Pix e comunicação com o banco de dados.
+### Este é o back-end da aplicação **Barber Shop**, responsável pelo gerenciamento dos agendamentos, pagamentos via Pix e comunicação com o banco de dados.
 
 ## 🚀 Funcionalidades
 - Gerenciamento de **agendamentos** de clientes.
