@@ -8,31 +8,30 @@ const agendamentoSchema = new mongoose.Schema({
     data: String,
     hora: String,
     servico: String,
-    barbeiro: { type: String, enum: ['Leandro', 'Vitor'], required: true }, // 🔹 Opções fixas
-    status: { type: String, default: 'pendente' } // 🔹 Inicia como "pendente" até o pagamento ser aprovado
+    barbeiro: { type: String, enum: ['Leandro', 'Vitor'], required: true },
+    status: { type: String, default: 'pendente' }
 });
 
-// **Função para listar todos os agendamentos confirmados**
+//Função para listar todos os agendamentos confirmados
 export const listarTodosAgendamentos = async () => {
     try {
-        return await Agendamento.find({ status: "confirmado" }); // 🔹 Apenas agendamentos pagos
+        return await Agendamento.find({ status: "confirmado" });
     } catch (error) {
         console.error("Erro ao buscar agendamentos:", error);
         return [];
     }
 };
 
-// **Função para buscar horários disponíveis para um barbeiro específico**
+//Função para buscar horários disponíveis
 export const buscarHorariosDisponiveis = async (data, barbeiro) => {
     const horariosBase = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
 
     try {
-        // 🔹 Agora a busca é por data *e* barbeiro
         const agendamentosNoBanco = await Agendamento.find({ data, barbeiro });
 
         return horariosBase.map(hora => ({
             hora,
-            disponivel: !agendamentosNoBanco.some(a => a.hora === hora) // 🔹 Bloqueia apenas se o mesmo barbeiro estiver agendado
+            disponivel: !agendamentosNoBanco.some(a => a.hora === hora) //Bloqueia apenas se o mesmo barbeiro estiver agendado
         }));
     } catch (error) {
         console.error("Erro ao buscar horários:", error);
@@ -40,7 +39,7 @@ export const buscarHorariosDisponiveis = async (data, barbeiro) => {
     }
 };
 
-// **Função para salvar um novo agendamento no banco**
+// Função para salvar um novo agendamento
 export const salvarAgendamento = async (agendamento) => {
     try {
         const { nome, telefone, data, hora, servico, barbeiro } = agendamento;
@@ -55,15 +54,14 @@ export const salvarAgendamento = async (agendamento) => {
             return false;
         }
 
-        // Criando um novo agendamento com todos os campos necessários
         const novoAgendamento = new Agendamento({
             nome,
             telefone,
             data,
             hora,
             servico,
-            barbeiro, // 🔹 Agora garantimos que o barbeiro será salvo
-            pago: false // 🔹 Sempre inicia como "false" até o pagamento ser confirmado
+            barbeiro,
+            pago: true
         });
 
         await novoAgendamento.save();
@@ -76,7 +74,7 @@ export const salvarAgendamento = async (agendamento) => {
     }
 };
 
-// **Função para confirmar pagamento de um agendamento**
+// Função para confirmar pagamento de um agendamento
 export const confirmarPagamento = async (agendamentoId) => {
     try {
         const agendamento = await Agendamento.findById(agendamentoId);
@@ -84,7 +82,7 @@ export const confirmarPagamento = async (agendamentoId) => {
             throw new Error("Agendamento não encontrado.");
         }
 
-        agendamento.status = "confirmado"; // ✅ Agora está pago!
+        agendamento.status = "confirmado";
         await agendamento.save();
 
         return { mensagem: "Pagamento confirmado e agendamento atualizado!" };

@@ -4,15 +4,15 @@ import axios from "axios";
 import { Pix } from "faz-um-pix";
 import QRCode from "qrcode";
 import { buscarAgendamento } from "../services/agendamentoService.js";
-
+import Agendamento from "../models/agendamentoModel.js";
 dotenv.config();
 
 const router = express.Router();
 
 // Chaves Pix dos barbeiros
 const pixChaves = {
-    "Leandro": "5511966526732",
-    "Vitor": "5583998017216"
+    "Leandro": "xxxxxx",
+    "Vitor": "xxxxxx"
 };
 
 // Função para gerar código Pix
@@ -29,6 +29,32 @@ const gerarPixCode = async (chavePix, nomeRecebedor, cidade, valor) => {
         return null;
     }
 };
+
+router.post("/confirmar-agendamento", async (req, res) => {
+    try {
+        const { nome, telefone, data, hora, servico, barbeiro } = req.body;
+
+        console.log(`📢 Salvando agendamento para ${nome} às ${hora}`);
+
+        const novoAgendamento = new Agendamento({
+            nome,
+            telefone,
+            data,
+            hora,
+            servico,
+            barbeiro,
+            pago: true
+        });
+
+        await novoAgendamento.save();
+        console.log("✅ Agendamento salvo!");
+
+        res.json({ message: "Agendamento confirmado!" });
+    } catch (error) {
+        console.error("❌ Erro ao salvar agendamento:", error);
+        res.status(500).json({ error: "Erro ao salvar agendamento." });
+    }
+});
 
 // Endpoint para gerar QR Code Pix
 router.post('/gerar-pix', async (req, res) => {

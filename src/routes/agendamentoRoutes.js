@@ -31,22 +31,30 @@ router.get("/verificar-pagamento", async (req, res) => {
 });
 
 router.get('/disponiveis', async (req, res) => {
-    const { data } = req.query
-    if (!data) {
-        return res.status(400).json({ erro: "A data é obrigatória!" })
+    const { data, barbeiro } = req.query;
+
+    if (!data || !barbeiro) {
+        return res.status(400).json({ erro: "Data e barbeiro são obrigatórios!" });
     }
+
     try {
-        const horarios = await buscarHorariosDisponiveis(data)
-        res.json(horarios)
+        const horarios = await buscarHorariosDisponiveis(data, barbeiro);
+        res.json(horarios);
     } catch (error) {
-        res.status(500).json({ erro: "Erro ao buscar horários", detalhe: error.message })
+        res.status(500).json({ erro: "Erro ao buscar horários", detalhe: error.message });
     }
-})
+});
 
 router.get('/', async (req, res) => {
-    const agendamentos = await listarTodosAgendamentos()
-    res.json(agendamentos)
-})
+    try {
+        const agendamentos = await Agendamento.find({});
+        res.json(agendamentos);
+    } catch (error) {
+        console.error("Erro ao listar agendamentos:", error);
+        res.status(500).json({ erro: "Erro ao buscar agendamentos." });
+    }
+});
+
 
 router.post('/', async (req, res) => {
     const agendamento = req.body

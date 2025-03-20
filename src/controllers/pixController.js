@@ -1,6 +1,5 @@
 const mercadopago = require("mercadopago");
 
-// Configurar Mercado Pago com o token do .env
 mercadopago.configurations.setAccessToken(process.env.MERCADO_PAGO_ACCESS_TOKEN);
 
 const gerarPix = async (req, res) => {
@@ -11,7 +10,7 @@ const gerarPix = async (req, res) => {
             transaction_amount: parseFloat(valor),
             payment_method_id: "pix",
             payer: {
-                email: "cliente@email.com" // Opcional, pode vir do formulário
+                email: "cliente@email.com"
             }
         });
 
