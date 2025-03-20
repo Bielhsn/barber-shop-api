@@ -48,3 +48,8 @@ A API pode ser acessada na porta 8080:
 - Criar agendamento: ``POST`` /agendamentos
 - Verificar horários disponíveis: ``GET`` /agendamentos/disponiveis
 - Gerar código Pix: ``POST`` /api/gerar-pix
+
+## 📞 Contato
+✉️ Email: gabrielhenrique.hsn@gmail.com
+📌 Linkedin: [Gabriel Henrique](https://www.linkedin.com/in/gabriel-henrique-2631931b2/)
+
